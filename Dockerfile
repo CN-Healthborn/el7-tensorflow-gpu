@@ -65,7 +65,20 @@ RUN yum -y install \
 	osg-wn-client \
 	p7zip \
 	p7zip-plugins \
-	python-devel \
+        pkg-config \
+        python \
+        python3 \
+        python3-markdown \
+        python3-pip \
+        python3-requests \
+        python3-tk \
+        python3-yaml \
+        python-dev \
+        python-markdown \
+        python-numpy \
+        python-pip \
+        python-requests \
+        python-yaml \	
 	redhat-lsb-core \
 	rsync \
         stashcache-client \
@@ -125,28 +138,49 @@ RUN for NVBIN in \
     touch /usr/bin/$NVBIN ; \
   done
 
-
-
-
-
 ##############################################
 # Install TensorFlow, Keras, etc. with Python
-
-RUN curl -O https://bootstrap.pypa.io/get-pip.py
-RUN python get-pip.py
-RUN rm get-pip.py
-    
+   
 RUN echo "/usr/local/cuda/lib64/" >/etc/ld.so.conf.d/cuda.conf
 RUN echo "/usr/local/cuda/extras/CUPTI/lib64/" >>/etc/ld.so.conf.d/cuda.conf
 
-# install Cython
-RUN pip install cython
+# only support python3
 
-# Install TensorFlow GPU version
-RUN pip install --upgrade https://storage.googleapis.com/tensorflow/linux/gpu/tensorflow_gpu-1.12.0-cp27-none-linux_x86_64.whl
-    
-# keras
-RUN pip install keras==2.2.5
+RUN python3 -m pip install --upgrade pip && \
+    python3 -m pip install --upgrade setuptools
+
+RUN python3 -m pip --no-cache-dir install \
+        h5py \
+        ipykernel \
+        jupyter \
+        matplotlib \
+        numpy \
+        pandas \
+        Pillow \
+        scipy \
+        sklearn \
+        && \
+    python3 -m ipykernel.kernelspec
+
+# Install TensorFlow GPU version.
+RUN echo "Install tensorflow and tensorflow_addons"
+RUN python3 -m pip install --upgrade tensorflow==2.3 keras
+RUN python3 -m pip install --upgrade tensorflow_addons==0.8.3
+
+#############################
+
+# make sure we have a way to bind OpenCL directory
+RUN mkdir -p /etc/OpenCL/vendors 
+
+# CA certs
+RUN mkdir -p /etc/grid-security && \
+    cd /etc/grid-security && \
+    wget -nv https://download.pegasus.isi.edu/containers/certificates.tar.gz && \
+    tar xzf certificates.tar.gz && \
+    rm -f certificates.tar.gz
+
+# stashcp
+RUN python3 -m pip install stashcp
 
 #################################
 # Manually add Singularity files
